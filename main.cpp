@@ -124,8 +124,6 @@ double eval_binary(BinaryExpression::op_t op, double a, double b) {
     case BinaryExpression::Minus: return a - b;
     case BinaryExpression::Mul: return a * b;
     case BinaryExpression::Div: return a / b;
-    case BinaryExpression::Mod: return (int)a % (int)b;
-    case BinaryExpression::Pow: return pow(a, b);
     default: throw std::runtime_error("Unknown operator");
     }
 }
@@ -143,10 +141,7 @@ double eval(Expression e) {
         },
         [](const FunctionCall& e) -> double {
             auto arg = [&e](int i) { return eval(e.args.at(i)); };
-            if (e.function == "abs") return abs(arg(0));
-            if (e.function == "sin") return sin(arg(0));
-            if (e.function == "cos") return cos(arg(0));
-            if (e.function == "pow") return pow(arg(0), arg(1));
+            
             throw std::runtime_error("Unknown function");
         },
         [](const BinaryExpression& e) -> double {   
@@ -166,9 +161,12 @@ double eval(Expression e) {
 
 int errors;
 
-void test(const char* input, double expected) {
+void test(const char* _input, double expected) {
+    std::string input(_input);
     try {
-        auto result = eval(parse(input));
+        
+        std::replace(std::begin(input), std::end(input), ',', '.');
+        auto result = eval(parse(input.c_str()));
         if (result == expected) return;
         std::cout << input << " = " << expected << " : error, got " << result << '\n';
     }
@@ -187,10 +185,10 @@ int main() {
     test("-1", -1);
     test("(1)", 1);
     test("(-1)", -1);
-    test("abs(-1)", 1);
-    test("sin(0)", 0);
-    test("cos(0)", 1);
-    test("pow(2, 3)", 8);
+    //test("abs(-1)", 1);
+    //test("sin(0)", 0);
+    //test("cos(0)", 1);
+    //test("pow(2, 3)", 8);
     test("---1", -1);
     test("1+20", 21);
     test("1 + 20", 21);
@@ -214,5 +212,7 @@ int main() {
     test("1+2**3*10", 81);
     test("2**3+2*10", 28);
     test("5 * 4 + 3 * 2 + 1", 27);
+    test("5,001", 5.001);
+    test("(10000000*10000000)", 100000000000000L);
     std::cout << "Done with " << errors << " errors.\n";
 }
